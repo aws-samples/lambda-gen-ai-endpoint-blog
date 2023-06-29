@@ -2,7 +2,9 @@
 
 ## Purpose of this guide
 
-This guide was created as a companion for the blog [This is a placeholder link -> [How to access the Jurassic-2 (J2) large language model via an AWS Lambda endpoint]](https://aws.amazon.com/blogs/apn/). The deployment guide will walk you through all the needed steps to deploy the solution referred to in the blog post.
+This guide was created as a companion for the blog [This is a placeholder link -> [How to access the Jurassic-2 (J2) large language model via an AWS Lambda endpoint]](https://aws.amazon.com/blogs/apn/). Note the blog referenced will be published at a later date.
+
+The deployment guide will walk you through all the needed steps to deploy the solution referred to in the blog post.
 
 ## Prerequisites
 
