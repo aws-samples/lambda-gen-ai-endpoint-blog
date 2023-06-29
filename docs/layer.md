@@ -1,51 +1,54 @@
 # Deploying AWS Lambda layer
 
-This section we will walk you through all the steps needed to deploy the lambda layer needed for the lambda function to include  AI21 Lab's Python SDK library. This SDK is needed for the lambda function to communicate with the Jurassic-2 model.
+This section we will walk you through all the steps needed to deploy the lambda layer needed for the lambda function to include AI21 Lab's Python SDK library. This SDK is needed for the lambda function to communicate with the Jurassic-2 model.
 
 The purpose of the lambda layer is to give your lambda function access to libraries and custom runtimes that are not part of the of the AWS Lambda service natively. If you are not familiar with what lambda layers are you can learn more [here](https://docs.aws.amazon.com/lambda/latest/dg/invocation-layers.html).
 
+Note: We will be using the AWS CloudShell to run all the commands needed to deploy your layer.
+
 ## Packaging the Lambda layer
 
-This section will cover packaging up your lambda layer to upload to the AWS Lambda service.
+This section will cover packaging up your lambda layer and uploading it to the AWS Lambda service.
 
-1. This repo includes the _requirements.txt_ file in the following directory **_./lambda_layer > requirements.txt_** file with the names of the libraries that will be packaged with your lambda layer.
+1. Open the AWS CloudShell
 
-- Navigate to the **_./lambda_layer_** directory from your terminal.
-- Next run the command below.
+    You can access the AWS CloudShell by clicking the terminal icon at the top of your AWS Console window. See image below for where you can find the CloudShell icon outlined in red.
 
-If you don't have **pip3** installed you can find instructions here [here](https://pip.pypa.io/en/stable/installation/)
+    ![CloudShell](./images/cloud_shell_1.png)
+
+2. Once your AWS CloudShell opens you should be a terminal window open at the bottom of the screen similar to the image below.
+
+   ![CloudShell](./images/cloud_shell_2.png)
+
+3. Next you will run the commands below
+
+The CloudShell should have **pip3** already installed. If for some reason it is not installed you can find instructions [here](https://pip.pypa.io/en/stable/installation/) on how to install it.
+
+## Package your lambda layer 👇
 
 ```bash
-pip3 install -r requirements.txt -t ./python/lib/python3.9/site-packages && zip -r lambda_layer.zip ./python && rm -R ./python
+pip3 install -r requirements.txt -t ./python/lib/python3.9/site-packages && zip -r lambda_layer.zip ./python && rm -R ./python && ls
 ```
 
-2. If you have followed all the steps correctly you should have a folder containing the zipped lambda layer similar to the image below.
+You should then see the **lambda_layer.zip** listed in the terminal window after the command has run successfully. Next you will run the command below to upload the lambda layer to your AWS account.
 
-    **Note:** The **lambda_layer.zip** contains our lambda layer.
+## Upload your lambda layer 👇
 
-![Compressed Lambda layer](./images/zipped_layer.png)
+The command below may take a few seconds to execute.
 
-## Creating the Lambda layer
+```bash
+aws lambda publish-layer-version --layer-name AI21_layer --zip-file fileb://lambda_layer.zip --compatible-runtimes python3.9
+```
 
-1. To deploy the layer in your AWS account you will login and navigate to the AWS Lambda service.
+## Lambda layer
 
-2. Next you will navigate to the **_Layers_** section in the menu on the left. See image below.
+You can view your layer in the AWS Console by navigating to the AWS Lambda service, and then selecting **Layer** from the menu to the left. See image below.
 
-    ![Compressed Lambda layer](./images/layer_1.png)
+![CloudShell](./images/layer_nav.png)
 
-3. You will then click the **Create layer** button in the upper right-hand corner. See image below.
+You should then see a list showing your layer. See example below.
 
-    ![Create Layer](./images/layer_2.png)
-
-4. On the next screen you will fill in the layer configuration info. See example below.
-
-    ![Layer info](./images/layer_3.png)
-
-    For the **Upload** section you will navigate to the **_python.zip_** folder you created in the previous section.
-
-5. Once you have fill out the needed info you will click the **Create** button, and should see a screen similar to the one below.
-
-    ![Layer info](./images/layer_4.png)
+![CloudShell](./images/layer_list_1.png)
 
 You have now successfully created the lambda layer that will be used by the lambda function that you will deploy in the next section.
 
