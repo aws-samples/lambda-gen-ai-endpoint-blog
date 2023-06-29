@@ -17,7 +17,7 @@ In order to use the Jurassic-2 model you will need an API key from AI21 Labs.
 
 You will need your AI21 Labs API key in Step 2 when deploying your CloudFormation template.
 
-#### Note: Click the link for each step to go through the deployment guide.
+#### Note: Click the link for each step to go through the deployment guide
 
 ## [Step 1 - Deploying AWS Lambda layer](./docs/layer.md)
 
