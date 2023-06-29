@@ -1,0 +1,175 @@
+Description: >
+  This CloudFormation template deploys a lambda endpoint that makes calls to the Jurassic-2 LLM
+
+Parameters:
+  # passes the API key to the secret manager store
+  AI21APIKey:
+    Type: String
+    NoEcho: True
+    MinLength: "32"
+    MaxLength: "32"
+    Description: Stores the AI21 Labs API Key
+    
+Resources:
+  # lambda function that will be used as the public API endpoint
+  Jurassic2Lambda:
+    DependsOn:
+      - AI21APIKeySecret
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.lambda_handler
+      Description: "AWS Lambda endpoint that calls AI21 Lab's Jurassic-2 model (LLM)"
+      Code:
+        ZipFile: !Sub >
+          # imports needed libraries
+          
+          import json, os, ai21, boto3
+
+          def lambda_handler(event, context):
+              # Example of incoming request via JSON object {"prompt" : "What day is it?"}
+              # parse the prompt from the incoming event object
+              prompt = json.loads(event['body'])['prompt']
+    
+              client = boto3.client('secretsmanager')
+
+              # retrieves the api key ARN stored in AWS Secrets Manager
+              api_key_arn = os.environ["api_key_secret"]
+
+              # retrieves your AI21 Labs API key from AWS Secret Manager
+              secret = client.get_secret_value(
+                  SecretId=api_key_arn
+              )
+              
+              # sets the AI21 Labs API key
+              ai21.api_key = secret['SecretString']
+
+              # sets the Jurassic model you would like to use
+              model = os.environ['ai_21_model']
+
+              # sets the number of completions (results) that will be returned in the model results
+              numberOfResults = int(os.environ['model_result_count'])
+
+              # sets the maximum number of tokens that can be used when executing call to model
+              maxTokens = int(os.environ['model_max_tokens'])
+
+              # sets the temperature paramter for the model
+              temp = os.environ['model_temp']
+
+              # calls the Jurassic-2 model and passes model parameters to the method
+              model_response = ai21.Completion.execute(
+                  model=model,
+                  prompt=prompt,
+                  numResults=numberOfResults,
+                  maxTokens=maxTokens,
+                  temperature=temp
+              )
+
+              # output printed for debugging 
+              print(model_response.completions[0].data.text)
+              
+              # returns the models result in the body of the JSON object
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps(model_response.completions[0].data.text)
+              } 
+              
+      Runtime: python3.9
+      FunctionName: Jurassic-2-LLM-lambda-endpoint
+      Timeout: 120
+      ReservedConcurrentExecutions: 10
+      Environment:
+        Variables:
+          ai_21_model: "j2-ultra"
+          model_result_count: 1
+          model_max_tokens: 500
+          model_temp: 0.70
+          api_key_secret: !Ref AI21APIKeySecret
+      Role: !GetAtt JurassicLambdaRole.Arn
+
+  # Resource based policy that allows the API endpoint to be publicly accessible.
+  # The ability for the endpoint only to be called from a set domain can be controlled using the
+  # CORS property on the Jurassic2LambdaHTTPEndpoint (AWS::Lambda::Url) resource below
+  Jurassic2LambdaPermission:
+    DependsOn: 
+      - Jurassic2Lambda
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !Ref Jurassic2Lambda
+      Action: 'lambda:InvokeFunctionUrl'
+      Principal: "*"
+      FunctionUrlAuthType: NONE
+
+  # role that the lambda function will use
+  JurassicLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+
+  # policy attached to the role to give the lambda function the proper permissions
+  JurassicLambdaPolicy:
+    DependsOn:
+      - JurassicLambdaRole
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: JurassicLambdaPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "logs:CreateLogGroup"
+              - "logs:CreateLogStream"
+              - "logs:PutLogEvents"
+              - "secretsmanager:GetSecretValue"
+            Resource:
+              - !Ref AI21APIKeySecret
+              - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${Jurassic2Lambda}:*
+      Roles:
+        - !Ref JurassicLambdaRole
+
+  # secret managers secret that stores the API key
+  AI21APIKeySecret:
+    Type: AWS::SecretsManager::Secret
+    Properties: 
+      Description: "Stores the API key for AI21 Labs account"
+      Name: "AI21APIKey"
+      SecretString: !Ref AI21APIKey
+
+  # the URL resource that allows the lambda function to be called from an HTTP API endpoint
+  Jurassic2LambdaHTTPEndpoint:
+    DependsOn: 
+      - Jurassic2Lambda
+    Type: AWS::Lambda::Url
+    Properties: 
+      AuthType: NONE
+      Cors: 
+        # for testing we allow all origins ("*") - TESTING ONLY 
+        # you can replace the "*" with only the domains you would like the endpoint to be accessible from (recommended in a production environment)
+        # Example of setting in a production environment:
+        # AllowOrigins: 
+        #  - "https://my-domain.com, https://my-other-domain.com"
+        AllowOrigins: 
+          - "*"
+        AllowMethods: 
+          - "POST"
+          - "GET"
+        AllowCredentials: False
+        MaxAge: 0
+      TargetFunctionArn: !Ref Jurassic2Lambda
+
+Outputs:
+    Jurassic2LambdaFunction:
+        Value: !Sub https://console.aws.amazon.com/lambda/home?region=${AWS::Region}#/functions/${Jurassic2Lambda}?tab=configuration
+        Description: "Jurassic-2 lambda function"
+    Jurassic2LambdaAPIEndpointURL:
+        Value: !GetAtt Jurassic2LambdaHTTPEndpoint.FunctionUrl
+        Description: "Jurassic-2 Lambda API endpoint URL"
