@@ -1,4 +1,4 @@
-# A Step-by-Step Guide - Calling the Jurassic-2 (J2) Ultra Large Language Model through an AWS Lambda Endpoint
+# Calling the Jurassic-2 (J2) Ultra Large Language Model through an AWS Lambda Endpoint - A Step-by-Step Guide
 
 ## Purpose of this guide
 
