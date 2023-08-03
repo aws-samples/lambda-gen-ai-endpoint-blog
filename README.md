@@ -1,8 +1,8 @@
-# DRAFT - A Step-by-Step Guide - Calling the Jurassic-2 (J2) Large Language Model through an AWS Lambda Endpoint
+# A Step-by-Step Guide - Calling the Jurassic-2 (J2) Ultra Large Language Model through an AWS Lambda Endpoint
 
 ## Purpose of this guide
 
-This guide was created as a companion for the blog [This is a placeholder link -> [How to access the Jurassic-2 (J2) large language model via an AWS Lambda endpoint]](https://aws.amazon.com/blogs/apn/). Note the blog referenced will be published at a later date.
+This guide was created as a companion for the blog [How to access the Jurassic-2 (J2) large language model via an AWS Lambda endpoint](https://aws.amazon.com/blogs/apn/how-to-access-the-jurassic-2-large-language-model-via-an-aws-lambda-endpoint/).
 
 The deployment guide will walk you through all the needed steps to deploy the solution referred to in the blog post.
 
